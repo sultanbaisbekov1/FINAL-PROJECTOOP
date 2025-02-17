@@ -322,6 +322,7 @@ void draw_victory_menu();
 
 // LEVEL_H
 
+bool is_inside_level(int row, int column);
 bool is_colliding(Vector2 pos, char look_for = '#');
 char& get_collider(Vector2 pos, char look_for);
 
