@@ -121,9 +121,8 @@ void draw_game() {
 
 int main() {
     SetConfigFlags(FLAG_VSYNC_HINT);
-    InitWindow(GetScreenWidth(), GetScreenHeight(), "Platformer");
+    InitWindow(1024, 480, "Platformer");
     SetTargetFPS(60);
-    ToggleFullscreen();
     HideCursor();
 
     load_fonts();

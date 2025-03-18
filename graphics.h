@@ -17,8 +17,8 @@ void draw_text(Text &text) {
 
 void derive_graphics_metrics_from_loaded_level() {
     // Level and UI setup
-    screen_size.x  = static_cast<float>(GetRenderWidth());
-    screen_size.y = static_cast<float>(GetRenderHeight());
+    screen_size.x  = static_cast<float>(GetScreenWidth());
+    screen_size.y = static_cast<float>(GetScreenHeight());
 
     cell_size = screen_size.y / static_cast<float>(LEVELS[level_index].rows);
     screen_scale = std::min(screen_size.x, screen_size.y) / SCREEN_SCALE_DIVISOR;
