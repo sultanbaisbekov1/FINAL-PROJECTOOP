@@ -3,7 +3,7 @@
 
 ![Preview](https://i.imgur.com/2AscgVH.png)
 
-The primary goal of this project is to refactor and enhance a generic [Platformer](https://en.wikipedia.org/wiki/Platformer) game, originally written in a procedural programming style in C++, into an object-oriented design utilizing C++. This transformation should focus on encapsulating game functionalities into classes and objects, specifically targeting game levels, the player character, and the enemy characters code. Additionally, the project involves altering the level loading mechanism to dynamically parse level designs from `.sl` files, which utilize a specific run-length encoding format for level representation. A detailed description of the `.sl` file format can be found [below](#run-length-encoding).
+The primary goal of this project is to refactor and enhance a generic [Platformer](https://en.wikipedia.org/wiki/Platformer) game, originally written in a procedural programming style in C++, into an object-oriented design utilizing C++. This transformation should focus on encapsulating game functionalities into classes and objects, specifically targeting game levels, the player character, and the enemy characters code. Additionally, the project involves altering the level loading mechanism to dynamically parse level designs from `.rll` files, which utilize a specific run-length encoding format for level representation. A detailed description of the `.rll` file format can be found [below](#run-length-encoding).
 
 ![Platformer](https://i.imgur.com/uuK9ubI.png)
 
@@ -25,7 +25,7 @@ Be inventive in applying OOP principles to redesign the game, ensuring to implem
 
 ### Dynamic Level Loading:
 
-- Implement functionality to parse and load levels from the `levels.sl` file located in the `data` directory. This file contains level designs encoded using a specific [run-length encoding scheme](#run-length-encoding). Your implementation must accurately parse these files, correctly interpret the run-length encoding, and construct playable levels from the data.
+- Implement functionality to parse and load levels from the `levels.rll` file located in the `data` directory. This file contains level designs encoded using a specific [run-length encoding scheme](#run-length-encoding). Your implementation must accurately parse these files, correctly interpret the run-length encoding, and construct playable levels from the data.
 
 - Integrate robust error handling using exceptions to manage potential parsing and file-reading errors gracefully. This approach should ensure the game remains stable and provides informative feedback in the event of encountered errors.
 
