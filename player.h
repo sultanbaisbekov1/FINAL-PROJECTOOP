@@ -4,7 +4,6 @@
 #include "raylib.h"
 #include "globals.h"
 #include <vector>
-#include <cstddef>
 
 class Level;
 class Enemy;
@@ -12,10 +11,8 @@ class Enemy;
 class Player {
 public:
     Player();
+    ~Player() = default;
 
-    void resetStats();
-    void incrementScore();
-    int getTotalScore() const;
     void spawn(Level* level);
     void kill();
     void moveHorizontally(float delta, Level* level);
@@ -27,9 +24,13 @@ public:
     bool isOnGround() const { return onGround; }
     bool isLookingForward() const { return lookingForward; }
     bool isMoving() const { return moving; }
-    int getLives() const { return lives; }
     bool isDead() const { return dead; }
+    int getLives() const { return lives; }
     int getTimer() const { return timer; }
+    int getTotalScore() const;
+
+    void resetStats();
+    void incrementScore();
 
 private:
     Vector2 position;
@@ -39,9 +40,9 @@ private:
     bool moving;
     bool dead;
     int lives;
-    int levelScores[LEVEL_COUNT];
     int timer;
     int timeToCoinCounter;
+    int levelScores[LEVEL_COUNT];
 };
 
 #endif // PLAYER_H

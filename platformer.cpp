@@ -7,7 +7,7 @@
 Game::Game() : gameState(MENU_STATE), gameFrame(0), levelIndex(0) {
     SetConfigFlags(FLAG_VSYNC_HINT);
     InitWindow(1024, 480, "Platformer");
-    SetWindowSize(1024, 480); // Lock window size
+    SetWindowSize(1024, 480);
     SetTargetFPS(60);
     HideCursor();
 
@@ -17,6 +17,7 @@ Game::Game() : gameState(MENU_STATE), gameFrame(0), levelIndex(0) {
 
     loadAssets();
     currentLevel->load(levelIndex);
+    player->spawn(currentLevel);
 }
 
 Game::~Game() {
@@ -62,11 +63,12 @@ void Game::update() {
 
     switch (gameState) {
         case MENU_STATE:
+            if (IsAudioDeviceReady()) StopSound(playerDeathSound); // Остановка звука, если он остался
             if (IsKeyPressed(KEY_ENTER)) {
                 TraceLog(LOG_INFO, "Transitioning to GAME_STATE");
                 gameState = GAME_STATE;
                 currentLevel->unload();
-                currentLevel->load(0);
+                currentLevel->load(levelIndex);
                 player->spawn(currentLevel);
                 for (auto enemy : enemies) delete enemy;
                 enemies.clear();
@@ -110,6 +112,11 @@ void Game::update() {
                     TraceLog(LOG_INFO, "Transitioning to VICTORY_STATE");
                     gameState = VICTORY_STATE;
                 }
+
+                if (player->isDead()) {
+                    TraceLog(LOG_INFO, "Transitioning to DEATH_STATE");
+                    gameState = DEATH_STATE;
+                }
             }
             break;
 
@@ -145,11 +152,13 @@ void Game::update() {
                     gameState = GAME_OVER_STATE;
                     if (IsAudioDeviceReady()) PlaySound(gameOverSound);
                 }
+                if (IsAudioDeviceReady()) StopSound(playerDeathSound);
             }
             if (IsKeyPressed(KEY_ESCAPE)) {
                 TraceLog(LOG_INFO, "Returning to MENU_STATE from DEATH_STATE");
                 currentLevel->unload();
                 gameState = MENU_STATE;
+                if (IsAudioDeviceReady()) StopSound(playerDeathSound);
             }
             break;
 
@@ -182,7 +191,6 @@ void Game::update() {
 
         case VICTORY_STATE:
             if (previousState != VICTORY_STATE) {
-                // Initialize victory balls on entering VICTORY_STATE
                 graphics->initializeVictoryBalls();
                 ClearBackground(BLACK);
                 EndDrawing();

@@ -1,275 +1,172 @@
-#include "platformer.h"
-#include "level.h"
 #include "player.h"
+#include "level.h"
 #include "enemy.h"
-#include "graphics.h"
+#include <cmath>
 
-Game::Game() : gameState(MENU_STATE), gameFrame(0), levelIndex(0) {
-    SetConfigFlags(FLAG_VSYNC_HINT);
-    InitWindow(1024, 480, "Platformer");
-    SetWindowSize(1024, 480);
-    SetTargetFPS(60);
-    HideCursor();
+Player::Player() :
+    yVelocity(0),
+    onGround(false),
+    lookingForward(true),
+    moving(false),
+    dead(false),
+    lives(MAX_PLAYER_LIVES),
+    timer(MAX_LEVEL_TIME),
+    timeToCoinCounter(0) {
+    for (int i = 0; i < LEVEL_COUNT; i++) {
+        levelScores[i] = 0;
+    }
+}
 
-    currentLevel = new Level();
-    player = new Player();
-    graphics = new Graphics(player);
+void Player::resetStats() {
+    lives = MAX_PLAYER_LIVES;
+    dead = false;
+    timer = MAX_LEVEL_TIME;
+    for (int i = 0; i < LEVEL_COUNT; i++) {
+        levelScores[i] = 0;
+    }
+}
 
-    loadAssets();
-    currentLevel->load(levelIndex);
-    player->spawn(currentLevel);
-    for (size_t row = 0; row < currentLevel->getRows(); ++row) {
-        for (size_t column = 0; column < currentLevel->getColumns(); ++column) {
-            if (currentLevel->getCell(row, column) == currentLevel->getEnemyChar()) {
-                enemies.push_back(new Enemy({static_cast<float>(column), static_cast<float>(row)}));
-                currentLevel->setCell(row, column, currentLevel->getAirChar());
+void Player::incrementScore() {
+    levelScores[level_index] += 10;
+}
+
+int Player::getTotalScore() const {
+    int total = 0;
+    for (int i = 0; i < LEVEL_COUNT; i++) {
+        total += levelScores[i];
+    }
+    return total;
+}
+
+void Player::spawn(Level* level) {
+    bool found = false;
+    for (size_t row = 0; row < level->getRows(); ++row) {
+        for (size_t column = 0; column < level->getColumns(); ++column) {
+            if (level->getCell(row, column) == PLAYER) {
+                position = {static_cast<float>(column), static_cast<float>(row)};
+                yVelocity = 0;
+                onGround = false;
+                dead = false;
+                level->setCell(row, column, AIR);
+                found = true;
+                return;
             }
         }
     }
-}
-
-Game::~Game() {
-    unloadAssets();
-    delete currentLevel;
-    delete player;
-    delete graphics;
-    for (auto enemy : enemies) {
-        delete enemy;
-    }
-    CloseAudioDevice();
-    CloseWindow();
-}
-
-void Game::loadAssets() {
-    menuFont = LoadFontEx("data/fonts/ARCADE_N.TTF", 256, nullptr, 128);
-    InitAudioDevice();
-    if (!IsAudioDeviceReady()) {
-        TraceLog(LOG_WARNING, "Audio device initialization failed. Proceeding without sound.");
-    } else {
-        coinSound = LoadSound("data/sounds/coin.wav");
-        exitSound = LoadSound("data/sounds/exit.wav");
-        killEnemySound = LoadSound("data/sounds/kill_enemy.wav");
-        playerDeathSound = LoadSound("data/sounds/player_death.wav");
-        gameOverSound = LoadSound("data/sounds/game_over.wav");
+    // Если символ '@' не найден, устанавливаем начальную позицию по умолчанию
+    if (!found) {
+        position = {1.0f, static_cast<float>(level->getRows() - 2)}; // Начальная позиция: второй столбец, предпоследняя строка
+        yVelocity = 0;
+        onGround = false;
+        dead = false;
     }
 }
 
-void Game::unloadAssets() {
-    UnloadFont(menuFont);
-    if (IsAudioDeviceReady()) {
-        UnloadSound(coinSound);
-        UnloadSound(exitSound);
-        UnloadSound(killEnemySound);
-        UnloadSound(playerDeathSound);
-        UnloadSound(gameOverSound);
+void Player::kill() {
+    if (!dead) {
+        dead = true;
+        yVelocity = -JUMP_STRENGTH * 0.5f;
+        lives--;
     }
 }
 
-void Game::update() {
-    gameFrame++;
-    static GameState previousState = MENU_STATE;
-
-    switch (gameState) {
-        case MENU_STATE:
-            if (IsKeyPressed(KEY_ENTER)) {
-                TraceLog(LOG_INFO, "Transitioning to GAME_STATE");
-                gameState = GAME_STATE;
-                currentLevel->unload();
-                currentLevel->load(levelIndex);
-                player->spawn(currentLevel);
-                for (auto enemy : enemies) delete enemy;
-                enemies.clear();
-                for (size_t row = 0; row < currentLevel->getRows(); ++row) {
-                    for (size_t column = 0; column < currentLevel->getColumns(); ++column) {
-                        if (currentLevel->getCell(row, column) == currentLevel->getEnemyChar()) {
-                            enemies.push_back(new Enemy({static_cast<float>(column), static_cast<float>(row)}));
-                            currentLevel->setCell(row, column, currentLevel->getAirChar());
-                        }
-                    }
-                }
-            }
-            if (IsKeyPressed(KEY_ESCAPE)) {
-                TraceLog(LOG_INFO, "Exiting game from MENU_STATE");
-                CloseWindow();
-            }
-            break;
-
-        case GAME_STATE:
-            {
-                float deltaX = 0.0f;
-                if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) deltaX += 0.1f;
-                if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) deltaX -= 0.1f;
-                if (deltaX != 0.0f) player->moveHorizontally(deltaX, currentLevel);
-
-                if ((IsKeyDown(KEY_UP) || IsKeyDown(KEY_W) || IsKeyDown(KEY_SPACE)) && player->isOnGround()) {
-                    player->jump();
-                }
-
-                player->update(currentLevel, enemies, coinSound, exitSound, killEnemySound, playerDeathSound, gameFrame);
-                for (auto enemy : enemies) {
-                    enemy->update(currentLevel);
-                }
-
-                if (IsKeyPressed(KEY_ESCAPE)) {
-                    TraceLog(LOG_INFO, "Transitioning to PAUSED_STATE");
-                    gameState = PAUSED_STATE;
-                }
-
-                if (currentLevel->isColliding(player->getPosition(), currentLevel->getExitChar()) && player->getTimer() <= 0) {
-                    TraceLog(LOG_INFO, "Transitioning to VICTORY_STATE");
-                    levelIndex++;
-                    if (levelIndex >= LEVEL_COUNT) {
-                        gameState = VICTORY_STATE;
-                    } else {
-                        currentLevel->unload();
-                        currentLevel->load(levelIndex);
-                        player->spawn(currentLevel);
-                        for (auto enemy : enemies) delete enemy;
-                        enemies.clear();
-                        for (size_t row = 0; row < currentLevel->getRows(); ++row) {
-                            for (size_t column = 0; column < currentLevel->getColumns(); ++column) {
-                                if (currentLevel->getCell(row, column) == currentLevel->getEnemyChar()) {
-                                    enemies.push_back(new Enemy({static_cast<float>(column), static_cast<float>(row)}));
-                                    currentLevel->setCell(row, column, currentLevel->getAirChar());
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (player->isDead()) {
-                    TraceLog(LOG_INFO, "Transitioning to DEATH_STATE");
-                    gameState = DEATH_STATE;
-                }
-            }
-            break;
-
-        case PAUSED_STATE:
-            if (IsKeyPressed(KEY_ESCAPE)) {
-                TraceLog(LOG_INFO, "Returning to GAME_STATE");
-                gameState = GAME_STATE;
-            }
-            break;
-
-        case DEATH_STATE:
-            player->updateGravity(currentLevel);
-            if (IsKeyPressed(KEY_ENTER)) {
-                if (player->getLives() > 0) {
-                    TraceLog(LOG_INFO, "Restarting level in GAME_STATE");
-                    currentLevel->unload();
-                    currentLevel->load(levelIndex);
-                    player->spawn(currentLevel);
-                    for (auto enemy : enemies) delete enemy;
-                    enemies.clear();
-                    for (size_t row = 0; row < currentLevel->getRows(); ++row) {
-                        for (size_t column = 0; column < currentLevel->getColumns(); ++column) {
-                            if (currentLevel->getCell(row, column) == currentLevel->getEnemyChar()) {
-                                enemies.push_back(new Enemy({static_cast<float>(column), static_cast<float>(row)}));
-                                currentLevel->setCell(row, column, currentLevel->getAirChar());
-                            }
-                        }
-                    }
-                    gameState = GAME_STATE;
-                } else {
-                    TraceLog(LOG_INFO, "Transitioning to GAME_OVER_STATE");
-                    currentLevel->unload();
-                    gameState = GAME_OVER_STATE;
-                    if (IsAudioDeviceReady()) PlaySound(gameOverSound);
-                }
-            }
-            if (IsKeyPressed(KEY_ESCAPE)) {
-                TraceLog(LOG_INFO, "Returning to MENU_STATE from DEATH_STATE");
-                currentLevel->unload();
-                gameState = MENU_STATE;
-            }
-            break;
-
-        case GAME_OVER_STATE:
-            if (IsKeyPressed(KEY_ENTER)) {
-                TraceLog(LOG_INFO, "Restarting game from GAME_OVER_STATE");
-                levelIndex = 0;
-                player->resetStats();
-                currentLevel->unload();
-                currentLevel->load(0);
-                player->spawn(currentLevel);
-                for (auto enemy : enemies) delete enemy;
-                enemies.clear();
-                for (size_t row = 0; row < currentLevel->getRows(); ++row) {
-                    for (size_t column = 0; column < currentLevel->getColumns(); ++column) {
-                        if (currentLevel->getCell(row, column) == currentLevel->getEnemyChar()) {
-                            enemies.push_back(new Enemy({static_cast<float>(column), static_cast<float>(row)}));
-                            currentLevel->setCell(row, column, currentLevel->getAirChar());
-                        }
-                    }
-                }
-                gameState = GAME_STATE;
-            }
-            if (IsKeyPressed(KEY_ESCAPE)) {
-                TraceLog(LOG_INFO, "Returning to MENU_STATE from GAME_OVER_STATE");
-                currentLevel->unload();
-                gameState = MENU_STATE;
-            }
-            break;
-
-        case VICTORY_STATE:
-            if (previousState != VICTORY_STATE) {
-                graphics->initializeVictoryBalls();
-                ClearBackground(BLACK);
-                EndDrawing();
-                BeginDrawing();
-                ClearBackground(BLACK);
-                EndDrawing();
-                BeginDrawing();
-            }
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE)) {
-                TraceLog(LOG_INFO, "Returning to MENU_STATE from VICTORY_STATE");
-                levelIndex = 0;
-                player->resetStats();
-                currentLevel->unload();
-                gameState = MENU_STATE;
-            }
-            break;
+void Player::moveHorizontally(float delta, Level* level) {
+    if (dead) return;
+    moving = delta != 0;
+    if (moving) {
+        lookingForward = delta > 0;
     }
 
-    previousState = gameState;
-}
-
-void Game::draw() {
-    BeginDrawing();
-
-    switch(gameState) {
-        case MENU_STATE:
-            graphics->drawMenu();
-            break;
-        case GAME_STATE:
-            graphics->drawGame(currentLevel, enemies, gameFrame);
-            break;
-        case DEATH_STATE:
-            graphics->drawDeathScreen(currentLevel, enemies, gameFrame);
-            break;
-        case GAME_OVER_STATE:
-            graphics->drawGameOverMenu();
-            break;
-        case PAUSED_STATE:
-            graphics->drawPauseMenu();
-            break;
-        case VICTORY_STATE:
-            graphics->drawVictoryMenu(gameFrame);
-            break;
-    }
-
-    EndDrawing();
-}
-
-void Game::run() {
-    while (!WindowShouldClose()) {
-        update();
-        draw();
+    float newX = position.x + delta;
+    if (!level->isColliding({newX, position.y}, level->getWallChar())) {
+        position.x = newX;
     }
 }
 
-int main() {
-    Game game;
-    game.run();
-    return 0;
+void Player::jump() {
+    if (onGround && !dead) {
+        yVelocity = -JUMP_STRENGTH;
+        onGround = false;
+    }
+}
+
+void Player::update(Level* level, std::vector<Enemy*>& enemies, Sound coinSound, Sound exitSound,
+                   Sound killEnemySound, Sound playerDeathSound, size_t gameFrame) {
+    if (dead) return;
+
+    // Обновление таймера
+    if (timer > 0) {
+        timer--;
+    }
+
+    // Проверка на сбор монет
+    if (level->isColliding(position, COIN)) {
+        char& cell = level->getCollider(position, COIN);
+        cell = AIR;
+        incrementScore();
+        if (IsAudioDeviceReady()) PlaySound(coinSound);
+    }
+
+    // Проверка на выход
+    if (level->isColliding(position, EXIT) && timer <= 0) {
+        if (IsAudioDeviceReady()) PlaySound(exitSound);
+    }
+
+    // Проверка на столкновение с врагами
+    for (auto it = enemies.begin(); it != enemies.end();) {
+        Enemy* enemy = *it;
+        if (CheckCollisionCircles(position, 0.5f, enemy->getPosition(), 0.5f)) {
+            if (yVelocity > 0 && position.y < enemy->getPosition().y) {
+                // Убиваем врага, подпрыгиваем
+                yVelocity = -BOUNCE_OFF_ENEMY;
+                if (IsAudioDeviceReady()) PlaySound(killEnemySound);
+                delete enemy;
+                it = enemies.erase(it);
+            } else {
+                // Игрок умирает
+                kill();
+                if (IsAudioDeviceReady()) PlaySound(playerDeathSound);
+                break;
+            }
+        } else {
+            ++it;
+        }
+    }
+
+    // Проверка на шипы
+    if (level->isColliding(position, SPIKE)) {
+        kill();
+        if (IsAudioDeviceReady()) PlaySound(playerDeathSound);
+    }
+
+    updateGravity(level);
+}
+
+void Player::updateGravity(Level* level) {
+    yVelocity += GRAVITY_FORCE;
+    float newY = position.y + yVelocity;
+
+    // Проверка вертикальных столкновений
+    if (yVelocity > 0) { // Падение
+        if (level->isColliding({position.x, newY}, level->getWallChar())) {
+            position.y = floor(newY);
+            yVelocity = 0;
+            onGround = true;
+        } else {
+            position.y = newY;
+            onGround = false;
+        }
+    } else { // Прыжок
+        if (level->isColliding({position.x, newY}, level->getWallChar())) {
+            position.y = ceil(newY);
+            yVelocity = CEILING_BOUNCE_OFF;
+        } else {
+            position.y = newY;
+        }
+    }
+
+    // Проверка на падение за пределы уровня
+    if (position.y > level->getRows()) {
+        kill();
+    }
 }
