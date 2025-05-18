@@ -1,14 +1,22 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.10)
 project(platformer)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(raylib CONFIG REQUIRED)
-if(APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
-elseif(UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fsanitize=address -fsanitize=undefined")
-endif()
+add_compile_options(-fsanitize=address -fsanitize=undefined -g -fdiagnostics-color=always)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fsanitize=undefined")
 
-add_executable(platformer platformer.cpp globals.h graphics.h level.h player.h enemy.h assets.h utilities.h)
+include_directories(/usr/local/include)
+
+set(SOURCES
+        platformer.cpp
+        graphics.cpp
+        level.cpp
+        player.cpp
+        enemy.cpp
+)
+
+add_executable(platformer ${SOURCES})
+
 target_link_libraries(platformer PRIVATE raylib)
