@@ -5,6 +5,8 @@
 #include "globals.h"
 #include <vector>
 #include <cstddef>
+#include <string>
+#include <stdexcept>
 
 class Player;
 class Enemy;
@@ -15,6 +17,7 @@ public:
     ~Level();
 
     void load(int index);
+    void loadFromRLL(const std::string& filename, int levelIndex);
     void unload();
 
     bool isInside(int row, int column) const;
@@ -44,9 +47,19 @@ private:
     };
     static LevelData LEVELS[LEVEL_COUNT];
 
+    std::vector<std::string> parseRLLFile(const std::string& filename);
+    std::string decodeRLEString(const std::string& rleString);
+    void parseLevelDimensions(const std::string& decodedLevel);
+    void createLevelFromRLE(const std::string& decodedLevel);
+
     size_t rows;
     size_t columns;
     char* data;
+};
+
+class LevelLoadException : public std::runtime_error {
+public:
+    explicit LevelLoadException(const std::string& message) : std::runtime_error(message) {}
 };
 
 #endif // LEVEL_H

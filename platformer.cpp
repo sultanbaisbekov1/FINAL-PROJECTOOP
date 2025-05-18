@@ -99,7 +99,11 @@ void Game::update() {
                 }
 
                 player->update(currentLevel, enemies, coinSound, exitSound, killEnemySound, playerDeathSound, gameFrame);
+
+                // Update enemy states and positions
+                Vector2 playerPos = player->getPosition();
                 for (auto enemy : enemies) {
+                    enemy->updateState(currentLevel, playerPos);
                     enemy->update(currentLevel);
                 }
 
