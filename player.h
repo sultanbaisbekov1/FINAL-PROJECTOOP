@@ -19,6 +19,7 @@ public:
     void jump();
     void update(Level* level, std::vector<Enemy*>& enemies, Sound coinSound, Sound exitSound, Sound killEnemySound, Sound playerDeathSound, size_t gameFrame);
     void updateGravity(Level* level);
+    void updateTimer(int delta) { timer = std::max(0, timer + delta); }
 
     Vector2 getPosition() const { return position; }
     bool isOnGround() const { return onGround; }

@@ -53,9 +53,8 @@ void Player::spawn(Level* level) {
             }
         }
     }
-    // Если символ '@' не найден, устанавливаем начальную позицию по умолчанию
     if (!found) {
-        position = {1.0f, static_cast<float>(level->getRows() - 2)}; // Начальная позиция: второй столбец, предпоследняя строка
+        position = {1.0f, static_cast<float>(level->getRows() - 2)};
         yVelocity = 0;
         onGround = false;
         dead = false;
@@ -94,12 +93,10 @@ void Player::update(Level* level, std::vector<Enemy*>& enemies, Sound coinSound,
                    Sound killEnemySound, Sound playerDeathSound, size_t gameFrame) {
     if (dead) return;
 
-    // Обновление таймера
     if (timer > 0) {
         timer--;
     }
 
-    // Проверка на сбор монет
     if (level->isColliding(position, COIN)) {
         char& cell = level->getCollider(position, COIN);
         cell = AIR;
@@ -107,23 +104,26 @@ void Player::update(Level* level, std::vector<Enemy*>& enemies, Sound coinSound,
         if (IsAudioDeviceReady()) PlaySound(coinSound);
     }
 
-    // Проверка на выход
-    if (level->isColliding(position, EXIT) && timer <= 0) {
+    if (level->isColliding(position, EXIT)) {
         if (IsAudioDeviceReady()) PlaySound(exitSound);
     }
 
-    // Проверка на столкновение с врагами
     for (auto it = enemies.begin(); it != enemies.end();) {
         Enemy* enemy = *it;
-        if (CheckCollisionCircles(position, 0.5f, enemy->getPosition(), 0.5f)) {
-            if (yVelocity > 0 && position.y < enemy->getPosition().y) {
-                // Убиваем врага, подпрыгиваем
+        Vector2 enemyPos = enemy->getPosition();
+
+        Rectangle playerBox = { position.x - 0.4f, position.y - 0.4f, 0.8f, 0.8f };
+        Rectangle enemyBox = { enemyPos.x - 0.4f, enemyPos.y - 0.4f, 0.8f, 0.8f };
+
+        if (CheckCollisionRecs(playerBox, enemyBox)) {
+            bool playerAboveEnemy = (position.y + 0.4f) < (enemyPos.y - 0.2f);
+
+            if (playerAboveEnemy && yVelocity > 0) {
                 yVelocity = -BOUNCE_OFF_ENEMY;
                 if (IsAudioDeviceReady()) PlaySound(killEnemySound);
                 delete enemy;
                 it = enemies.erase(it);
             } else {
-                // Игрок умирает
                 kill();
                 if (IsAudioDeviceReady()) PlaySound(playerDeathSound);
                 break;
@@ -133,7 +133,6 @@ void Player::update(Level* level, std::vector<Enemy*>& enemies, Sound coinSound,
         }
     }
 
-    // Проверка на шипы
     if (level->isColliding(position, SPIKE)) {
         kill();
         if (IsAudioDeviceReady()) PlaySound(playerDeathSound);
@@ -146,8 +145,7 @@ void Player::updateGravity(Level* level) {
     yVelocity += GRAVITY_FORCE;
     float newY = position.y + yVelocity;
 
-    // Проверка вертикальных столкновений
-    if (yVelocity > 0) { // Падение
+    if (yVelocity > 0) {
         if (level->isColliding({position.x, newY}, level->getWallChar())) {
             position.y = floor(newY);
             yVelocity = 0;
@@ -156,7 +154,7 @@ void Player::updateGravity(Level* level) {
             position.y = newY;
             onGround = false;
         }
-    } else { // Прыжок
+    } else {
         if (level->isColliding({position.x, newY}, level->getWallChar())) {
             position.y = ceil(newY);
             yVelocity = CEILING_BOUNCE_OFF;
@@ -165,7 +163,6 @@ void Player::updateGravity(Level* level) {
         }
     }
 
-    // Проверка на падение за пределы уровня
     if (position.y > level->getRows()) {
         kill();
     }

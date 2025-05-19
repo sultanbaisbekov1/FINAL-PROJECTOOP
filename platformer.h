@@ -18,8 +18,7 @@ public:
         GAME_STATE,
         PAUSED_STATE,
         DEATH_STATE,
-        GAME_OVER_STATE,
-        VICTORY_STATE
+        GAME_OVER_STATE
     };
 
     Game();
@@ -36,6 +35,7 @@ private:
     GameState gameState;
     size_t gameFrame;
     int levelIndex;
+    int transitionTimer;
     static const int LEVEL_COUNT = 3;
 
     Level* currentLevel;
