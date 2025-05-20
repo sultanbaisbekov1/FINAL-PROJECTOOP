@@ -124,6 +124,7 @@ void Game::update() {
                         currentLevel->unload();
                         currentLevel->load(levelIndex);
                         player->spawn(currentLevel);
+                        player->updateTimer(MAX_LEVEL_TIME - player->getTimer());
                         for (auto enemy : enemies) {
                             delete enemy;
                         }
