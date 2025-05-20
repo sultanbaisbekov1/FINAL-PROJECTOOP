@@ -22,7 +22,6 @@ void Level::load(int index) {
     try {
         loadFromRLL("data/levels.rll", index);
     } catch (const LevelLoadException& e) {
-        // Fallback to hardcoded levels if RLL loading fails
         unload();
         rows = LEVELS[index].rows;
         columns = LEVELS[index].columns;
@@ -58,7 +57,6 @@ std::vector<std::string> Level::parseRLLFile(const std::string& filename) {
     std::string currentLevel;
 
     while (std::getline(file, line)) {
-        // Skip empty lines and comments
         if (line.empty() || line[0] == ';') {
             if (!currentLevel.empty()) {
                 levels.push_back(currentLevel);
@@ -126,7 +124,6 @@ void Level::createLevelFromRLE(const std::string& decodedLevel) {
 
     data = new char[rows * columns];
 
-    // Initialize with air
     for (size_t i = 0; i < rows * columns; i++) {
         data[i] = AIR;
     }

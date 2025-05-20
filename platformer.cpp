@@ -63,7 +63,7 @@ void Game::update() {
 
     switch (gameState) {
         case MENU_STATE:
-            if (IsAudioDeviceReady()) StopSound(playerDeathSound); // Остановка звука, если он остался
+            if (IsAudioDeviceReady()) StopSound(playerDeathSound);
             if (IsKeyPressed(KEY_ENTER)) {
                 TraceLog(LOG_INFO, "Transitioning to GAME_STATE");
                 gameState = GAME_STATE;
@@ -100,10 +100,7 @@ void Game::update() {
 
                 player->update(currentLevel, enemies, coinSound, exitSound, killEnemySound, playerDeathSound, gameFrame);
 
-                // Update enemy states and positions
-                Vector2 playerPos = player->getPosition();
                 for (auto enemy : enemies) {
-                    enemy->updateState(currentLevel, playerPos);
                     enemy->update(currentLevel);
                 }
 
@@ -112,25 +109,21 @@ void Game::update() {
                     gameState = PAUSED_STATE;
                 }
 
-                // Check for level completion
                 if (currentLevel->isColliding(player->getPosition(), currentLevel->getExitChar())) {
                     TraceLog(LOG_INFO, "Level completed, transitioning to next level");
                     if (IsAudioDeviceReady()) PlaySound(exitSound);
                     levelIndex++;
                     if (levelIndex >= LEVEL_COUNT) {
-                        // If we've completed all levels, return to menu
                         levelIndex = 0;
                         player->resetStats();
                         currentLevel->unload();
                         gameState = MENU_STATE;
                         TraceLog(LOG_INFO, "All levels completed! Returning to MENU_STATE");
                     } else {
-                        // Load the next level
                         TraceLog(LOG_INFO, "Loading next level: %d", levelIndex);
                         currentLevel->unload();
                         currentLevel->load(levelIndex);
                         player->spawn(currentLevel);
-                        // Clear and recreate enemies for the new level
                         for (auto enemy : enemies) {
                             delete enemy;
                         }

@@ -10,7 +10,6 @@ const Color Graphics::VICTORY_BALL_COLOR = {180, 180, 180, 255};
 Graphics::Graphics(Player* player) : player(player), screenScale(1.0f), cellSize(0), horizontalShift(0) {
     screenSize = {static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())};
 
-    // Initialize text elements
     menuFont = LoadFontEx("data/fonts/ARCADE_N.TTF", 256, nullptr, 128);
     gameTitle = {"Platformer", {0.50f, 0.50f}, 100.0f, RED, 4.0f, &menuFont};
     gameSubtitle = {"Press Enter to Start", {0.50f, 0.65f}, 32.0f, WHITE, 4.0f, &menuFont};
@@ -217,7 +216,6 @@ void Graphics::drawGame(Level* level, const std::vector<Enemy*>& enemies, size_t
         }
     }
 
-    // Draw enemies
     for (const auto& enemy : enemies) {
         Vector2 pos = {
             (enemy->getPosition().x - player->getPosition().x) * cellSize + horizontalShift,
@@ -226,7 +224,6 @@ void Graphics::drawGame(Level* level, const std::vector<Enemy*>& enemies, size_t
         drawSprite(enemyWalkSprite, pos, cellSize, gameFrame);
     }
 
-    // Draw player
     Vector2 playerPos = {horizontalShift, player->getPosition().y * cellSize};
     if (!player->isDead()) {
         if (!player->isOnGround()) {
@@ -240,7 +237,6 @@ void Graphics::drawGame(Level* level, const std::vector<Enemy*>& enemies, size_t
         drawImage(playerDeadImage, playerPos, cellSize);
     }
 
-    // Draw overlay
     const float ICON_SIZE = 48.0f * screenScale;
     float verticalOffset = 8.0f * screenScale;
 
@@ -297,7 +293,7 @@ void Graphics::drawVictoryMenu(size_t gameFrame) {
 }
 
 void Graphics::initializeVictoryBalls() {
-    deriveMetricsFromLevel(nullptr); // Ensure screenSize and screenScale are set
+    deriveMetricsFromLevel(nullptr);
     for (auto& ball : victoryBalls) {
         ball.x = static_cast<float>(rand()) / RAND_MAX * screenSize.x;
         ball.y = static_cast<float>(rand()) / RAND_MAX * screenSize.y;

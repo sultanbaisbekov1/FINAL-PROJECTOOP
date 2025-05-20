@@ -112,11 +112,11 @@ void Player::update(Level* level, std::vector<Enemy*>& enemies, Sound coinSound,
         Enemy* enemy = *it;
         Vector2 enemyPos = enemy->getPosition();
 
-        Rectangle playerBox = { position.x - 0.4f, position.y - 0.4f, 0.8f, 0.8f };
-        Rectangle enemyBox = { enemyPos.x - 0.4f, enemyPos.y - 0.4f, 0.8f, 0.8f };
+        Rectangle playerBox = { position.x - 0.3f, position.y - 0.3f, 0.6f, 0.6f };
+        Rectangle enemyBox = { enemyPos.x - 0.3f, enemyPos.y - 0.3f, 0.6f, 0.6f };
 
         if (CheckCollisionRecs(playerBox, enemyBox)) {
-            bool playerAboveEnemy = (position.y + 0.4f) < (enemyPos.y - 0.2f);
+            bool playerAboveEnemy = (position.y + 0.2f) < (enemyPos.y - 0.1f);
 
             if (playerAboveEnemy && yVelocity > 0) {
                 yVelocity = -BOUNCE_OFF_ENEMY;

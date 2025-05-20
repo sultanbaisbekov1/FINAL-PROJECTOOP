@@ -21,7 +21,7 @@ public:
     void drawGameOverMenu();
     void drawPauseMenu();
     void drawVictoryMenu(size_t gameFrame);
-    void initializeVictoryBalls(); // New public method for initialization
+    void initializeVictoryBalls();
 
 private:
     struct Text {
@@ -77,7 +77,6 @@ private:
     Texture2D middlegroundImage;
     Texture2D foregroundImage;
 
-    // Text elements
     Text gameTitle;
     Text gameSubtitle;
     Text gamePaused;
@@ -88,7 +87,6 @@ private:
     Text victoryTitle;
     Text victorySubtitle;
 
-    // Victory menu background
     static const size_t VICTORY_BALL_COUNT = 2000;
     static constexpr float VICTORY_BALL_MAX_SPEED = 2.0f;
     static constexpr float VICTORY_BALL_MIN_RADIUS = 2.0f;
@@ -97,10 +95,8 @@ private:
     static const unsigned char VICTORY_BALL_TRAIL_TRANSPARENCY = 10;
     VictoryBall victoryBalls[VICTORY_BALL_COUNT];
 
-    // References
     Player* player;
 
-    // Graphics metrics
     Vector2 screenSize;
     float screenScale;
     float cellSize;
