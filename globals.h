@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <cmath>
 
-/* Game Elements */
 
 inline const char WALL      = '#',
                   WALL_DARK = '=',
@@ -19,7 +18,6 @@ inline const char WALL      = '#',
                   COIN      = '*',
                   EXIT      = 'E';
 
-/* Levels */
 
 struct level {
     size_t rows = 0, columns = 0;
@@ -93,26 +91,20 @@ inline level LEVELS[LEVEL_COUNT] = {
     LEVEL_1, LEVEL_2, LEVEL_3
 };
 
-/* Loaded Level Data */
 
 inline level current_level;
 inline char *current_level_data;
 
-/* Timer-mechanic related */
 inline const int MAX_LEVEL_TIME = 50 * 60;
 inline int timer = MAX_LEVEL_TIME;
 inline int time_to_coin_counter = 0;
-
-/* Physics constants */
 
 inline const float PLAYER_MOVEMENT_SPEED = 0.1f;
 inline const float JUMP_STRENGTH         = 0.3f;
 inline const float CEILING_BOUNCE_OFF    = 0.05f;
 inline const float ENEMY_MOVEMENT_SPEED  = 0.07f;
-inline const float BOUNCE_OFF_ENEMY      = 0.1f;
+inline const float BOUNCE_OFF_ENEMY      = 0.115f;
 inline const float GRAVITY_FORCE         = 0.01f;
-
-/* Player data */
 
 inline float player_y_velocity = 0;
 inline Vector2 player_pos;
@@ -126,23 +118,18 @@ inline int player_level_scores[LEVEL_COUNT];
 inline const int MAX_PLAYER_LIVES = 3;
 inline int player_lives = MAX_PLAYER_LIVES;
 
-/* Enemy data */
 
-// Forward declaration of Enemy class
 class Enemy;
 
 inline std::vector<Enemy*> enemies;
 
-/* Graphic Metrics */
 
-// UI
 inline const float SCREEN_SCALE_DIVISOR = 700.0f;
 inline Vector2 screen_size;
 inline float screen_scale;
 inline float cell_size;
 inline float horizontal_shift;
 
-// Parallax background scrolling
 inline Vector2 background_size;
 inline float background_y_offset;
 
@@ -150,11 +137,9 @@ inline const float PARALLAX_PLAYER_SCROLLING_SPEED = 0.003f;
 inline const float PARALLAX_IDLE_SCROLLING_SPEED = 0.00005f;
 inline const float PARALLAX_LAYERED_SPEED_DIFFERENCE = 3.0f;
 
-/* Fonts */
 
 inline Font menu_font;
 
-/* Display Text Parameters */
 
 struct Text {
     std::string str;
@@ -217,8 +202,6 @@ inline Text victory_subtitle = {
     {0.50f, 0.65f}
 };
 
-/* Images and Sprites */
-
 struct sprite {
     size_t frame_count    = 0;
     size_t frames_to_skip = 3;
@@ -229,17 +212,14 @@ struct sprite {
     Texture2D *frames = nullptr;
 };
 
-// Level Elements
 inline Texture2D wall_image;
 inline Texture2D wall_dark_image;
 inline Texture2D spike_image;
 inline Texture2D exit_image;
 inline sprite coin_sprite;
 
-// UI Elements
 inline Texture2D heart_image;
 
-// Player
 inline Texture2D player_stand_forward_image;
 inline Texture2D player_stand_backwards_image;
 inline Texture2D player_jump_forward_image;
@@ -248,15 +228,11 @@ inline Texture2D player_dead_image;
 inline sprite player_walk_forward_sprite;
 inline sprite player_walk_backwards_sprite;
 
-// Enemy
 inline sprite enemy_walk;
 
-// Background Elements
 inline Texture2D background;
 inline Texture2D middleground;
 inline Texture2D foreground;
-
-/* Sounds */
 
 inline Sound coin_sound;
 inline Sound exit_sound;
