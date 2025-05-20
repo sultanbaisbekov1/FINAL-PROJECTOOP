@@ -27,7 +27,7 @@ void Player::resetStats() {
 }
 
 void Player::incrementScore() {
-    levelScores[level_index] += 10;
+    levelScores[level_index] += 1;
 }
 
 int Player::getTotalScore() const {
@@ -94,7 +94,11 @@ void Player::update(Level* level, std::vector<Enemy*>& enemies, Sound coinSound,
     if (dead) return;
 
     if (timer > 0) {
-        timer--;
+        if (level->isColliding(position, EXIT)) {
+            timer = std::max(0, timer - 28);
+        } else {
+            timer--;
+        }
     }
 
     if (level->isColliding(position, COIN)) {

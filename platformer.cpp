@@ -112,32 +112,7 @@ void Game::update() {
                 if (currentLevel->isColliding(player->getPosition(), currentLevel->getExitChar())) {
                     TraceLog(LOG_INFO, "Level completed, transitioning to next level");
                     if (IsAudioDeviceReady()) PlaySound(exitSound);
-                    levelIndex++;
-                    if (levelIndex >= LEVEL_COUNT) {
-                        levelIndex = 0;
-                        player->resetStats();
-                        currentLevel->unload();
-                        gameState = MENU_STATE;
-                        TraceLog(LOG_INFO, "All levels completed! Returning to MENU_STATE");
-                    } else {
-                        TraceLog(LOG_INFO, "Loading next level: %d", levelIndex);
-                        currentLevel->unload();
-                        currentLevel->load(levelIndex);
-                        player->spawn(currentLevel);
-                        player->updateTimer(MAX_LEVEL_TIME - player->getTimer());
-                        for (auto enemy : enemies) {
-                            delete enemy;
-                        }
-                        enemies.clear();
-                        for (size_t row = 0; row < currentLevel->getRows(); ++row) {
-                            for (size_t column = 0; column < currentLevel->getColumns(); ++column) {
-                                if (currentLevel->getCell(row, column) == currentLevel->getEnemyChar()) {
-                                    enemies.push_back(new Enemy({static_cast<float>(column), static_cast<float>(row)}));
-                                    currentLevel->setCell(row, column, currentLevel->getAirChar());
-                                }
-                            }
-                        }
-                    }
+                    gameState = LEVEL_TRANSITION_STATE;
                 }
 
                 if (player->isDead()) {
@@ -215,6 +190,57 @@ void Game::update() {
                 gameState = MENU_STATE;
             }
             break;
+
+        case LEVEL_TRANSITION_STATE:
+            {
+                float deltaX = 0.0f;
+                if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) deltaX += 0.1f;
+                if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) deltaX -= 0.1f;
+                if (deltaX != 0.0f) player->moveHorizontally(deltaX, currentLevel);
+
+                if ((IsKeyDown(KEY_UP) || IsKeyDown(KEY_W) || IsKeyDown(KEY_SPACE)) && player->isOnGround()) {
+                    player->jump();
+                }
+
+                player->update(currentLevel, enemies, coinSound, exitSound, killEnemySound, playerDeathSound, gameFrame);
+
+                for (auto enemy : enemies) {
+                    enemy->update(currentLevel);
+                }
+
+                if (!currentLevel->isColliding(player->getPosition(), currentLevel->getExitChar())) {
+                    gameState = GAME_STATE;
+                } else if (player->getTimer() <= 0) {
+                    levelIndex++;
+                    if (levelIndex >= LEVEL_COUNT) {
+                        levelIndex = 0;
+                        player->resetStats();
+                        currentLevel->unload();
+                        gameState = MENU_STATE;
+                        TraceLog(LOG_INFO, "All levels completed! Returning to MENU_STATE");
+                    } else {
+                        TraceLog(LOG_INFO, "Loading next level: %d", levelIndex);
+                        currentLevel->unload();
+                        currentLevel->load(levelIndex);
+                        player->spawn(currentLevel);
+                        player->updateTimer(MAX_LEVEL_TIME - player->getTimer());
+                        for (auto enemy : enemies) {
+                            delete enemy;
+                        }
+                        enemies.clear();
+                        for (size_t row = 0; row < currentLevel->getRows(); ++row) {
+                            for (size_t column = 0; column < currentLevel->getColumns(); ++column) {
+                                if (currentLevel->getCell(row, column) == currentLevel->getEnemyChar()) {
+                                    enemies.push_back(new Enemy({static_cast<float>(column), static_cast<float>(row)}));
+                                    currentLevel->setCell(row, column, currentLevel->getAirChar());
+                                }
+                            }
+                        }
+                        gameState = GAME_STATE;
+                    }
+                }
+            }
+            break;
     }
 
     previousState = gameState;
@@ -238,6 +264,9 @@ void Game::draw() {
             break;
         case PAUSED_STATE:
             graphics->drawPauseMenu();
+            break;
+        case LEVEL_TRANSITION_STATE:
+            graphics->drawGame(currentLevel, enemies, gameFrame);
             break;
     }
 

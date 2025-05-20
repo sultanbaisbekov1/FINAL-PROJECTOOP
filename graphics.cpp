@@ -4,6 +4,7 @@
 #include "enemy.h"
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
 
 const Color Graphics::VICTORY_BALL_COLOR = {180, 180, 180, 255};
 

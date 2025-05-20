@@ -18,7 +18,8 @@ public:
         GAME_STATE,
         PAUSED_STATE,
         DEATH_STATE,
-        GAME_OVER_STATE
+        GAME_OVER_STATE,
+        LEVEL_TRANSITION_STATE
     };
 
     Game();
